@@ -23,15 +23,42 @@ public_users.post("/register", (req,res) => {
 
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
-    return res.status(300).json({message: books});
+    new Promise((resolve, reject) => {
+        if (books) {
+            resolve(books);
+        } else {
+            reject("No books found");
+        }
+    })
+    .then(bookList => {
+        return res.status(200).json({ message: bookList });
+    })
+    .catch(err => {
+        return res.status(500).json({ message: err });
+    });
 });
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
     const isbn = req.params.isbn;
-    const selection = books[isbn];
 
-    return res.status(300).json({message:  selection});
+    // Wrap the lookup in a Promise
+    const getBookByISBN = new Promise((resolve, reject) => {
+        const selection = books[isbn];
+        if (selection) {
+            resolve(selection);
+        } else {
+            reject(`Book with ISBN ${isbn} not found`);
+        }
+    });
+
+    getBookByISBN
+        .then(book => {
+            res.status(200).json({ message: book });
+        })
+        .catch(err => {
+            res.status(404).json({ message: err });
+        });
  });
   
 // Get book details based on author
